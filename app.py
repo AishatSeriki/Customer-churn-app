@@ -7,8 +7,18 @@ st.set_page_config(page_title="Customer Churn Prediction", layout="centered")
 
 # Load model
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(BASE_DIR, "churn_pipeline.joblib")
-model = joblib.load(model_path)
+model_path = os.path.join(BASE_DIR, "churn_pipeline.pkl")
+
+if not os.path.exists(model_path):
+    st.error(f"Model file not found: {model_path}")
+    st.info("Make sure 'churn_pipeline.pkl' is in the same folder as app.py in your GitHub repo.")
+    st.stop()
+
+try:
+    model = joblib.load(model_path)
+except Exception as e:
+    st.error(f"Failed to load model: {e}")
+    st.stop()
 
 st.title("Customer Churn Prediction")
 st.write("Enter customer details to predict whether a customer is likely to churn.")
@@ -48,33 +58,42 @@ TotalCharges = st.number_input("Total Charges", min_value=0.0, value=1000.0)
 
 if st.button("Predict"):
     input_df = pd.DataFrame(
-        [{
-            "gender": gender,
-            "SeniorCitizen": SeniorCitizen,
-            "Partner": Partner,
-            "Dependents": Dependents,
-            "tenure": tenure,
-            "PhoneService": PhoneService,
-            "MultipleLines": MultipleLines,
-            "InternetService": InternetService,
-            "OnlineSecurity": OnlineSecurity,
-            "OnlineBackup": OnlineBackup,
-            "DeviceProtection": DeviceProtection,
-            "TechSupport": TechSupport,
-            "StreamingTV": StreamingTV,
-            "StreamingMovies": StreamingMovies,
-            "Contract": Contract,
-            "PaperlessBilling": PaperlessBilling,
-            "PaymentMethod": PaymentMethod,
-            "MonthlyCharges": MonthlyCharges,
-            "TotalCharges": TotalCharges,
-        }]
+        [
+            {
+                "gender": gender,
+                "SeniorCitizen": SeniorCitizen,
+                "Partner": Partner,
+                "Dependents": Dependents,
+                "tenure": tenure,
+                "PhoneService": PhoneService,
+                "MultipleLines": MultipleLines,
+                "InternetService": InternetService,
+                "OnlineSecurity": OnlineSecurity,
+                "OnlineBackup": OnlineBackup,
+                "DeviceProtection": DeviceProtection,
+                "TechSupport": TechSupport,
+                "StreamingTV": StreamingTV,
+                "StreamingMovies": StreamingMovies,
+                "Contract": Contract,
+                "PaperlessBilling": PaperlessBilling,
+                "PaymentMethod": PaymentMethod,
+                "MonthlyCharges": MonthlyCharges,
+                "TotalCharges": TotalCharges,
+            }
+        ]
     )
 
-    prediction = model.predict(input_df)[0]
-    probability = model.predict_proba(input_df)[0][1]
+    try:
+        prediction = model.predict(input_df)[0]
+        probability = model.predict_proba(input_df)[0][1]
 
-    if prediction == 1:
-        st.error(f"Prediction: Customer is likely to churn. Probability: {probability:.2%}")
-    else:
-        st.success(f"Prediction: Customer is not likely to churn. Probability: {probability:.2%}")
+        if prediction == 1:
+            st.error(
+                f"Prediction: Customer is likely to churn. Probability: {probability:.2%}"
+            )
+        else:
+            st.success(
+                f"Prediction: Customer is not likely to churn. Probability: {probability:.2%}"
+            )
+    except Exception as e:
+        st.error(f"Prediction failed: {e}")
